@@ -1,33 +1,48 @@
 # 🏍 Seedream MCP Server
 
-> 火山引擎 Seedream 5.0 图片生成 MCP 连接器，让 Claude Desktop 直接调用 Seedream AI 生成图片。
+> 火山引擎 Seedream 5.0 图片生成 MCP 连接器
+> 让 Claude Desktop 在需要生图时**自动调用** Seedream AI，无需手动操作。
 
-## 功能介绍
+## ✨ 功能
 
-- 📸 **文字生图**：用中文或英文描述，Seedream 5.0 直接生成高质量图片
-- 📐 **多种尺寸**：支持 11 种尺寸，从正方形到宽屏、竖屏、手机屏幕比例均可
-- 💾 **本地保存**：生成的图片自动保存到你指定的本地目录
-- 🔌 **MCP 协议**：标准 MCP 接口，与 Claude Desktop 无缝集成
+| 工具 | 说明 |
+|------|------|
+| `seedream_generate_image` | 文字生图，生成单张高质量图片 |
+| `seedream_generate_batch` | 批量生图，同一 prompt 并行生成多张供选择 |
+| `seedream_list_sizes` | 查看所有支持的图片尺寸及适用场景 |
 
-## 效果展示
+配置完成后，直接对 Claude 说「帮我生成一张...的图片」，Claude 就会自动调用 Seedream 5.0 生成并保存到本地。
 
-在 Claude Desktop 中说「帮我生成一张夕阳下的摩托车图片」，Claude 会自动调用本服务，生成图片并保存到本地。
+## 📐 支持的图片尺寸
 
-## 安装步骤
+| 尺寸 | 比例 | 适用场景 |
+|------|------|----------|
+| **2048×2048** | 1:1 | 社交头像、封面（⭐ 推荐） |
+| **2560×1440** | 16:9 | 视频封面、PPT 背景 |
+| **1440×2560** | 9:16 | 手机壁纸、短视频封面 |
+| **2400×1600** | 3:2 | 横版摄影风配图 |
+| **1600×2400** | 2:3 | 竖版海报、书籍封面 |
+| **2560×1080** | 21:9 | 超宽横幅、网站顶图 |
+| **1920×1920** | 1:1 | 标准正方形大图 |
+
+> ⚠️ Seedream 5.0 Lite 要求最小像素数 **3,686,400**，低于此要求会报错。
+
+## 🚀 安装步骤
 
 ### 第一步：获取火山引擎 API 凭证
 
-1. 登录 [火山引擎控制台](https://console.volcengine.com/ark)
-2. 进入「开通管理」→「视觉模型」，找到 **Doubao-Seedream-5.0-lite**，点击「开通服务」
-3. 进入「在线推理」→「创建推理接入点」，选择 Seedream-5.0-lite，创建后复制 `ep-xxx` 格式的接入点 ID
-4. 进入「API Key 管理」→「创建 API Key」，复制生成的 Key
+1. 登录 [火山引擎方舟控制台](https://console.volcengine.com/ark)
+2. **开通管理 → 视觉模型** → 找到 `Doubao-Seedream-5.0-lite` → 点击「开通服务」
+3. **在线推理 → 创建推理接入点** → 选 Seedream-5.0-lite → 创建后复制 `ep-xxx` ID
+4. **API Key 管理 → 创建 API Key** → 复制 Key
 
 ### 第二步：安装 Python 依赖
 
-打开终端，运行以下命令：
-
 ```bash
-# 创建虚拟环境（推荐）
+# 需要 Python 3.10+（推荐用 Homebrew 安装）
+brew install python@3.12
+
+# 创建虚拟环境
 python3 -m venv ~/.seedream_venv
 source ~/.seedream_venv/bin/activate
 
@@ -35,7 +50,7 @@ source ~/.seedream_venv/bin/activate
 pip install "mcp[cli]" openai
 ```
 
-### 第三步：下载 MCP Server 脚本
+### 第三步：下载脚本
 
 ```bash
 mkdir -p ~/.seedream
@@ -45,19 +60,15 @@ curl -o ~/.seedream/seedream_mcp_server.py \
 
 ### 第四步：配置 Claude Desktop
 
-找到 Claude Desktop 配置文件（macOS 路径）：
+打开（或创建）配置文件：
 
-```
-~/Library/Application Support/Claude/claude_desktop_config.json
-```
-
-添加以下内容（替换为你自己的 Key 和 Endpoint ID）：
+**macOS**：`~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "seedream": {
-      "command": "/path/to/your/python3",
+      "command": "/opt/homebrew/bin/python3.12",
       "args": ["/Users/你的用户名/.seedream/seedream_mcp_server.py"],
       "env": {
         "ARK_API_KEY": "你的-API-Key",
@@ -72,59 +83,37 @@ curl -o ~/.seedream/seedream_mcp_server.py \
 
 ### 第五步：重启 Claude Desktop
 
-完全退出并重新打开 Claude Desktop，配置即可生效。
+完全退出并重新打开 Claude Desktop，即可生效。
 
-## 使用方法
-
-配置完成后，直接在 Claude Desktop 对话框中用自然语言描述你想要的图片：
+## 💬 使用示例
 
 ```
-帮我生成一张夜晚城市霓虹灯的摩托车图片，1024x1024
-帮我生成一张产品宣传图，背景是海边日落，16:9比例
+帮我生成一张夕阳下停在山顶的摩托车图片，电影质感
+帮我生成 3 张科技感头像供选择
+帮我生成一张 16:9 的 PPT 背景图，深蓝色科技风
 ```
 
-## 支持的图片尺寸
+## ⚙️ 环境变量
 
-| 比例 | 尺寸 | 适用场景 |
+| 变量 | 说明 | 是否必填 |
 |------|------|----------|
-| 1:1  | 1024×1024 | 社交媒体头像、封面 |
-| 1:1  | 2048×2048 | 高清正方形大图 |
-| 16:9 | 1280×720  | 视频封面、PPT背景 |
-| 9:16 | 720×1280  | 手机竖屏、短视频封面 |
-| 4:3  | 1152×864  | 横版配图 |
-| 3:4  | 864×1152  | 竖版配图、书籍封面 |
-| 3:2  | 1248×832  | 摄影风格横图 |
-| 2:3  | 832×1248  | 摄影风格竖图 |
-| 21:9 | 1512×648  | 超宽屏横幅 |
+| `ARK_API_KEY` | 火山引擎 API Key | ✅ 必填 |
+| `ARK_MODEL_ID` | 推理接入点 ID（ep-xxx） | ✅ 必填 |
+| `ARK_BASE_URL` | API 地址（默认北京区） | 可选 |
+| `IMAGE_SAVE_DIR` | 图片保存目录（默认桌面） | 可选 |
 
-> ⚠️ **注意**：Seedream-5.0-lite 要求图片最小像素数为 3,686,400（约 2048×2048），推荐使用 2048×2048 尺寸。
+## 📦 依赖
 
-## 可用工具
+```
+mcp[cli] >= 1.0
+openai >= 1.0
+Python >= 3.10
+```
 
-| 工具名 | 功能 |
-|--------|------|
-| `generate_image` | 根据文字描述生成图片 |
-| `list_supported_sizes` | 列出所有支持的图片尺寸 |
-
-## 环境变量说明
-
-| 变量名 | 说明 | 必填 |
-|--------|------|------|
-| `ARK_API_KEY` | 火山引擎 API Key | ✅ |
-| `ARK_MODEL_ID` | 推理接入点 ID（ep-xxx格式） | ✅ |
-| `ARK_BASE_URL` | API 基础地址 | 可选（有默认值） |
-| `IMAGE_SAVE_DIR` | 图片保存目录 | 可选（默认桌面） |
-
-## 依赖
-
-- Python 3.10+
-- `mcp[cli]` >= 1.0
-- `openai` >= 1.0
-
-## 许可证
+## 📄 许可证
 
 MIT License
 
-## 关于 Seedream
+---
 
-Seedream 是字节跳动旗下即梦平台的图片生成模型，通过火山引擎方舟平台提供 API 服务。
+> 由 [Claude](https://claude.ai) + [Seedream 5.0](https://www.volcengine.com/docs/82379) 驱动
